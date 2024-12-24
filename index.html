@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Do-Did-Doneで遊ぼう</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Let's play Do-Did-Done!</h1>
+    <div id="video-container">
+        <iframe id="player" width="560" height="315" 
+            src="https://www.youtube.com/embed/NX0GAXLvKFQ?enablejsapi=1"
+            title="YouTube video player" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+        </iframe>
+    </div>
+    <button id="start-button">練習開始！</button>
+    <div id="score-display">スコア: 0</div>
+    <div id="feedback"></div>
+    <div id="timing-log"></div>
+    <div class="button-container">
+        <button id="copy-button" onclick="copyTimings()">記録した時間をコピー</button>
+        <button id="reset-button" onclick="resetGame()">ゲームを中断</button>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
