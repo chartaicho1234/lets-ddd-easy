@@ -6,6 +6,7 @@ body {
     max-width: 800px;
     margin: 20px auto;
     padding: 0 20px;
+    touch-action: manipulation;
 }
 
 h1 {
@@ -44,6 +45,7 @@ button {
     border-radius: 5px;
     cursor: pointer;
     width: clamp(200px, 80%, 300px);
+    touch-action: manipulation;
 }
 
 #score-display {
