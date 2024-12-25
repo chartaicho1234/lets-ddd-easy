@@ -103,7 +103,7 @@ function checkTiming() {
     });
 
     const timingDifference = Math.abs(currentTime - nearestTiming);
-    const formattedTime = currentTime.toFixed(2);
+    const formattedTime = currentTime.toFixed(3); // 小数点第三位まで記録
     let result;
     
     // 判定（0.5秒以内なら成功）
@@ -158,4 +158,12 @@ function copyTimings() {
         alert('記録した時間をクリップボードにコピーしました！');
     });
 }
+
+// ボタンのタッチアクション制御を追加
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.style.touchAction = 'manipulation';
+    });
+});
   
