@@ -1,5 +1,5 @@
 let player;
-let targetTimings = [14.93, 15.33, 15.70, 16.10, 16.45, 21.06, 21.41, 21.83, 22.19, 22.56, 39.43, 39.84, 40.21, 40.58, 40.94, 60.03, 60.40, 62.72, 63.08, 63.47, 72.28, 72.68, 74.96, 75.34, 75.70, 83.76, 84.13, 84.53, 84.89, 85.26, 89.85, 90.23, 90.62, 91.01, 91.38, 122.73, 123.12, 125.38, 125.78, 126.18, 135.00, 135.37, 137.67, 138.07, 138.43, 186.97, 187.36, 189.62, 190.02, 190.41, 199.12, 199.53, 201.81, 202.21, 202.62, 210.58, 210.98, 211.38, 211.76, 212.13, 216.71, 217.09, 217.49, 217.89, 218.27]; // 判定したいタイミング（秒）
+let targetTimings = [14.829, 15.211, 15.594, 15.976, 16.358, 20.944, 21.326, 21.708, 22.090, 22.473, 39.288, 39.670, 40.052, 40.434, 40.817, 59.925, 60.307, 62.600, 62.982, 63.364, 72.154, 72.536, 74.829, 75.211, 75.594, 83.619, 84.001, 84.383, 84.766, 85.148, 89.734, 90.116, 90.498, 90.880, 91.262, 122.600, 122.982, 125.275, 125.657, 126.039, 134.829, 135.211, 137.504, 137.887, 138.269, 186.804, 187.186, 189.479, 189.861, 190.243, 199.033, 199.415, 201.708, 202.090, 202.473, 210.498, 210.880, 211.262, 211.645, 212.027, 216.613, 216.995, 217.377, 217.759, 218.141]; // 判定したいタイミング（秒）
 let score = 0;
 let isPlaying = false;
 let timingHistory = []; // 記録用の配列を追加
@@ -11,6 +11,9 @@ const NOTE_SPEED = 300; // ノーツの移動速度（ピクセル/秒）
 const NOTE_WIDTH = 20;
 const NOTE_HEIGHT = 20;
 const JUDGE_LINE_X = 100; // 判定線のX座標
+const BPM = 157;
+const OFFSET = 2.6; // 最初の無音時間（秒）
+const BEAT_INTERVAL = 60.0000 / BPM; // 小数点以下をより精密に
 
 // YouTube Player APIの準備
 function onYouTubeIframeAPIReady() {
@@ -168,16 +171,32 @@ document.addEventListener('DOMContentLoaded', function() {
     canvas = document.getElementById('notes-canvas');
     ctx = canvas.getContext('2d');
     
-    // Canvasのサイズをクライアントサイズに合わせる
+    // デバイスのピクセル密度に対応
     function resizeCanvas() {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        
+        // コンテキストのスケールを調整
+        ctx.scale(dpr, dpr);
     }
     
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    // ボタンのタッチアクション制御
+    // タッチイベントの追加
+    canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault(); // デフォルトの動作を防止
+        if (isPlaying) {
+            checkTiming();
+        }
+    }, { passive: false });
+    
+    // 既存のボタンのタッチアクション制御
     const buttons = document.querySelectorAll('button');
     buttons.forEach(button => {
         button.style.touchAction = 'manipulation';
@@ -202,30 +221,55 @@ requestAnimationFrame(animate);
 function drawNotes(deltaTime) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // 判定線の描画
-    ctx.beginPath();
-    ctx.moveTo(JUDGE_LINE_X, 0);
-    ctx.lineTo(JUDGE_LINE_X, canvas.height);
-    ctx.strokeStyle = '#FF0000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
     const currentTime = player.getCurrentTime();
     
-    // 先の3秒分のノーツを描画
+    // 4分音符のガイドラインを描画（最初に描画して一番奥に表示）
+    const visibleBeats = 12;
+    for (let i = 0; i < visibleBeats; i++) {
+        // 現在時刻から次の拍を計算
+        const currentBeat = Math.ceil((currentTime - OFFSET) / (60.0000 / BPM));
+        const beatTime = OFFSET + ((currentBeat + i) * 60.0000 / BPM);
+        const timeUntilBeat = beatTime - currentTime;
+        
+        // オフセット時間より前は描画しない条件を追加
+        if (timeUntilBeat > 0 && timeUntilBeat < 3 && beatTime >= OFFSET) {
+            const x = JUDGE_LINE_X + (timeUntilBeat * NOTE_SPEED);
+            
+            // 4拍子の判定（BPMに基づいて直接計算）
+            const beatNumber = currentBeat + i;
+            const isBarLine = beatNumber % 4 === 0;
+            
+            // 縦線の描画
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.strokeStyle = isBarLine ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = isBarLine ? 2 : 1;
+            ctx.stroke();
+        }
+    }
+    
+    // ノーツの描画（次に描画）
     targetTimings.forEach(timing => {
         const timeUntilNote = timing - currentTime;
         if (timeUntilNote > 0 && timeUntilNote < 3) {
             const x = JUDGE_LINE_X + (timeUntilNote * NOTE_SPEED);
             const y = canvas.height / 2;
             
-            // ノーツの描画
             ctx.fillStyle = '#4CAF50';
             ctx.beginPath();
             ctx.arc(x, y, NOTE_WIDTH/2, 0, Math.PI * 2);
             ctx.fill();
         }
     });
+    
+    // 判定線の描画（最後に描画して一番手前に表示）
+    ctx.beginPath();
+    ctx.moveTo(JUDGE_LINE_X, 0);
+    ctx.lineTo(JUDGE_LINE_X, canvas.height);
+    ctx.strokeStyle = '#FF0000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 }
 
 // 判定時のエフェクト
