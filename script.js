@@ -4,6 +4,13 @@ let score = 0;
 let isPlaying = false;
 let timingHistory = []; // 記録用の配列を追加
 let previousTimingHistory = []; // 前回の記録を保存
+let canvas;
+let ctx;
+let lastFrameTime = 0;
+const NOTE_SPEED = 300; // ノーツの移動速度（ピクセル/秒）
+const NOTE_WIDTH = 20;
+const NOTE_HEIGHT = 20;
+const JUDGE_LINE_X = 100; // 判定線のX座標
 
 // YouTube Player APIの準備
 function onYouTubeIframeAPIReady() {
@@ -95,18 +102,17 @@ document.addEventListener('keydown', function(event) {
 function checkTiming() {
     const currentTime = player.getCurrentTime();
     const feedback = document.getElementById('feedback');
-    const timingLog = document.getElementById('timing-log');
     
-    // 最も近いターゲットタイミングを探す
     const nearestTiming = targetTimings.reduce((nearest, timing) => {
         return Math.abs(currentTime - timing) < Math.abs(currentTime - nearest) ? timing : nearest;
     });
 
     const timingDifference = Math.abs(currentTime - nearestTiming);
-    const formattedTime = currentTime.toFixed(3); // 小数点第三位まで記録
+    const formattedTime = currentTime.toFixed(3);
     let result;
     
-    // 判定（0.5秒以内なら成功）
+    showHitEffect(); // クリック時にエフェクトを表示
+    
     if (timingDifference <= 0.5) {
         score += Math.floor((1 - timingDifference) * 100);
         feedback.textContent = "Perfect!";
@@ -123,13 +129,11 @@ function checkTiming() {
         result = "Miss!";
     }
     
-    // 記録を配列に追加
     timingHistory.push({
         time: formattedTime,
         result: result
     });
     
-    // 記録を表示
     updateTimingLog();
     updateScore();
 }
@@ -161,9 +165,74 @@ function copyTimings() {
 
 // ボタンのタッチアクション制御を追加
 document.addEventListener('DOMContentLoaded', function() {
+    canvas = document.getElementById('notes-canvas');
+    ctx = canvas.getContext('2d');
+    
+    // Canvasのサイズをクライアントサイズに合わせる
+    function resizeCanvas() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+    }
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // ボタンのタッチアクション制御
     const buttons = document.querySelectorAll('button');
     buttons.forEach(button => {
         button.style.touchAction = 'manipulation';
     });
 });
+
+// アニメーションループ
+function animate(currentTime) {
+    if (!lastFrameTime) lastFrameTime = currentTime;
+    const deltaTime = (currentTime - lastFrameTime) / 1000; // 秒単位の経過時間
+    lastFrameTime = currentTime;
+    
+    if (isPlaying) {
+        drawNotes(deltaTime);
+    }
+    
+    requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// ノーツの描画
+function drawNotes(deltaTime) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 判定線の描画
+    ctx.beginPath();
+    ctx.moveTo(JUDGE_LINE_X, 0);
+    ctx.lineTo(JUDGE_LINE_X, canvas.height);
+    ctx.strokeStyle = '#FF0000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    const currentTime = player.getCurrentTime();
+    
+    // 先の3秒分のノーツを描画
+    targetTimings.forEach(timing => {
+        const timeUntilNote = timing - currentTime;
+        if (timeUntilNote > 0 && timeUntilNote < 3) {
+            const x = JUDGE_LINE_X + (timeUntilNote * NOTE_SPEED);
+            const y = canvas.height / 2;
+            
+            // ノーツの描画
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(x, y, NOTE_WIDTH/2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+}
+
+// 判定時のエフェクト
+function showHitEffect() {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+    ctx.arc(JUDGE_LINE_X, canvas.height/2, NOTE_WIDTH, 0, Math.PI * 2);
+    ctx.fill();
+}
   
