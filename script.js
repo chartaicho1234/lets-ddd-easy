@@ -171,24 +171,31 @@ document.addEventListener('DOMContentLoaded', function() {
     canvas = document.getElementById('notes-canvas');
     ctx = canvas.getContext('2d');
     
-    // デバイスのピクセル密度に対応
+    // デバイスのピクセル密度に対応したCanvas設定
     function resizeCanvas() {
         const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
         
+        // Canvasの実サイズをデバイスピクセル密度に合わせる
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
+        
+        // 表示サイズは維持
         canvas.style.width = `${rect.width}px`;
         canvas.style.height = `${rect.height}px`;
         
-        // コンテキストのスケールを調整
+        // 描画コンテキストのスケールを調整
         ctx.scale(dpr, dpr);
+        
+        // タッチデバイスでの描画を滑らかにする
+        ctx.imageSmoothingEnabled = true;
     }
     
+    // 初期化時とリサイズ時にCanvasを調整
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    // タッチイベントの追加
+    // タッチイベントの追加（スマホ対応）
     canvas.addEventListener('touchstart', function(e) {
         e.preventDefault(); // デフォルトの動作を防止
         if (isPlaying) {
