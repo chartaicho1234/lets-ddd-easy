@@ -230,6 +230,8 @@ function drawNotes(deltaTime) {
     
     const currentTime = player.getCurrentTime();
     
+    ctx.save(); // 描画状態を保存
+    
     // 4分音符のガイドラインを描画（最初に描画して一番奥に表示）
     const visibleBeats = 12;
     for (let i = 0; i < visibleBeats; i++) {
@@ -269,13 +271,17 @@ function drawNotes(deltaTime) {
         }
     });
     
+    ctx.restore(); // 描画状態を元に戻す
+    
     // 判定線の描画（最後に描画して一番手前に表示）
+    ctx.save(); // 新しい描画状態を保存
     ctx.beginPath();
     ctx.moveTo(JUDGE_LINE_X, 0);
     ctx.lineTo(JUDGE_LINE_X, canvas.height / window.devicePixelRatio);
     ctx.strokeStyle = '#FF0000';
     ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.restore(); // 描画状態を元に戻す
 }
 
 // 判定時のエフェクト
