@@ -268,6 +268,14 @@ function drawNotes(deltaTime) {
             ctx.fill();
         }
     });
+    
+    // 判定線の描画（最後に描画して一番手前に表示）
+    ctx.beginPath();
+    ctx.moveTo(JUDGE_LINE_X, 0);
+    ctx.lineTo(JUDGE_LINE_X, canvas.height / window.devicePixelRatio);
+    ctx.strokeStyle = '#FF0000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 }
 
 // 判定時のエフェクト
