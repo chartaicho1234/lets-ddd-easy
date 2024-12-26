@@ -233,7 +233,6 @@ function drawNotes(deltaTime) {
     // 4分音符のガイドラインを描画（最初に描画して一番奥に表示）
     const visibleBeats = 12;
     for (let i = 0; i < visibleBeats; i++) {
-        // 現在時刻から次の拍を計算
         const currentBeat = Math.ceil((currentTime - OFFSET) / (60.0000 / BPM));
         const beatTime = OFFSET + ((currentBeat + i) * 60.0000 / BPM);
         const timeUntilBeat = beatTime - currentTime;
@@ -241,7 +240,6 @@ function drawNotes(deltaTime) {
         // オフセット時間より前は描画しない条件を追加
         if (timeUntilBeat > 0 && timeUntilBeat < 3 && beatTime >= OFFSET) {
             const x = JUDGE_LINE_X + (timeUntilBeat * NOTE_SPEED);
-            const y = (canvas.height / window.devicePixelRatio) / 2; // ノーツの縦位置を調整
             
             // 4拍子の判定（BPMに基づいて直接計算）
             const beatNumber = currentBeat + i;
@@ -254,16 +252,22 @@ function drawNotes(deltaTime) {
             ctx.strokeStyle = isBarLine ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.5)';
             ctx.lineWidth = isBarLine ? 2 : 1;
             ctx.stroke();
-            
-            // ノーツ（緑の丸）の描画
-            ctx.save(); // 現在の描画状態を保存
-            ctx.beginPath();
-            ctx.arc(x, y, NOTE_WIDTH/2, 0, Math.PI * 2);
-            ctx.fillStyle = '#4CAF50';
-            ctx.fill();
-            ctx.restore(); // 描画状態を元に戻す
         }
     }
+    
+    // ノーツの描画（targetTimingsに基づいて描画）
+    targetTimings.forEach(timing => {
+        const timeUntilNote = timing - currentTime;
+        if (timeUntilNote > 0 && timeUntilNote < 3) {
+            const x = JUDGE_LINE_X + (timeUntilNote * NOTE_SPEED);
+            const y = canvas.height / window.devicePixelRatio / 2;
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(x, y, NOTE_WIDTH/2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
 }
 
 // 判定時のエフェクト
