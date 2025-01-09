@@ -1,5 +1,5 @@
 let player;
-let targetTimings = [14.829, 15.211, 15.594, 15.976, 16.358, 20.944, 21.326, 21.708, 22.090, 22.473, 39.288, 39.670, 40.052, 40.434, 40.817, 59.925, 60.307, 62.600, 62.982, 63.364, 72.154, 72.536, 74.829, 75.211, 75.594, 83.619, 84.001, 84.383, 84.766, 85.148, 89.734, 90.116, 90.498, 90.880, 91.262, 122.600, 122.982, 125.275, 125.657, 126.039, 134.829, 135.211, 137.504, 137.887, 138.269, 186.804, 187.186, 189.479, 189.861, 190.243, 199.033, 199.415, 201.708, 202.090, 202.473, 210.498, 210.880, 211.262, 211.645, 212.027, 216.613, 216.995, 217.377, 217.759, 218.141];
+let targetTimings = [2.600, 2.982, 3.364, 3.938, 4.320, 4.702, 4.893, 5.657, 6.039, 6.422, 6.995, 7.377, 7.759, 7.950, 8.715, 9.097, 9.479, 10.052, 10.434, 10.817, 11.008, 11.772, 12.154, 12.536, 13.110, 13.492, 13.874, 14.065, 14.829, 15.020, 15.211, 15.594, 15.785, 15.976, 16.167, 16.358, 16.740, 16.931, 17.122, 17.313, 17.504, 17.887, 18.269, 18.651, 19.224, 19.606, 19.989, 20.944, 21.135, 21.326, 21.708, 21.899, 22.090, 22.282, 22.473, 22.855, 23.046, 23.237, 23.428, 23.619, 24.001, 24.383, 24.766, 25.339, 25.721, 26.103, 38.141, 38.524, 38.906, 39.288, 39.479, 39.670, 40.052, 40.243, 40.434, 40.625, 40.817, 41.199, 41.390, 41.581, 41.772, 41.963, 42.345, 42.727, 43.110, 43.683, 44.065, 44.447, 48.460, 48.842, 49.224, 49.797, 50.180, 50.562, 54.575, 54.957, 55.339, 55.912, 56.294, 56.676, 59.925, 60.116, 60.307, 62.600, 62.791, 62.982, 63.173, 63.364, 72.154, 72.345, 72.536, 74.829, 75.020, 75.211, 75.403, 75.594, 82.090, 82.377, 82.664, 82.855, 83.046, 83.237, 83.619, 83.810, 84.001, 84.383, 84.575, 84.766, 84.957, 85.148, 85.530, 85.721, 85.912, 86.103, 86.294, 86.676, 87.059, 87.441, 88.014, 88.396, 88.778, 89.734, 89.925, 90.116, 90.498, 90.689, 90.880, 91.071, 91.262, 91.645, 91.836, 92.027, 92.218, 92.409, 92.791, 93.173, 93.555, 94.129, 94.511, 94.893, 106.931, 107.313, 107.696, 111.135, 111.517, 111.899, 112.473, 112.855, 113.237, 117.250, 117.632, 118.014, 118.587, 118.969, 119.352, 122.600, 122.791, 122.982, 125.275, 125.466, 125.657, 125.848, 126.039, 134.829, 135.020, 135.211, 137.504, 137.696, 137.887, 138.078, 138.269, 173.810, 174.192, 174.575, 175.148, 175.530, 175.912, 179.925, 180.307, 180.689, 181.262, 181.645, 182.027, 186.804, 186.995, 187.186, 189.479, 189.670, 189.861, 190.052, 190.243, 199.033, 199.224, 199.415, 201.708, 201.899, 202.090, 202.282, 202.473, 208.969, 209.256, 209.543, 209.734, 209.925, 210.116, 210.498, 210.689, 210.880, 211.262, 211.454, 211.645, 211.836, 212.027, 212.409, 212.600, 212.791, 212.982, 213.173, 213.555, 213.938, 214.320, 214.893, 215.275, 215.657, 216.613, 216.804, 216.995, 217.377, 217.568, 217.759, 217.950, 218.141, 218.524, 218.715, 218.906, 219.097, 219.288, 219.670, 220.052, 220.434, 221.008, 221.390, 221.772];
 let score = 0;
 let isPlaying = false;
 let timingHistory = [];
@@ -7,10 +7,12 @@ let previousTimingHistory = [];
 let canvas;
 let ctx;
 let lastFrameTime = 0;
-let currentVersion = 'v1';
+let currentVersion = 'v2';
 let isYouTubeAPIReady = false;
 let isPlayerReady = false;
 let animationFrameId = null;
+let recordedTimesArray = [];
+let timingOffset = 0; // スライダーの値
 
 const NOTE_SPEED = 300;
 const NOTE_WIDTH = 20;
@@ -90,8 +92,18 @@ function checkPlayerReady() {
     return isPlayerReady && player && typeof player.getPlayerState === 'function';
 }
 
-// スタートボタンのイベントリスナー
-document.getElementById("start-button").addEventListener("click", function() {
+// スタートボタンのイベントリスナーを修正
+const startButton = document.getElementById("start-button");
+
+startButton.addEventListener("mousedown", function(event) {
+    handleStartButtonEvent(event);
+});
+
+startButton.addEventListener("touchstart", function(event) {
+    handleStartButtonEvent(event);
+});
+
+function handleStartButtonEvent(event) {
     if (!checkPlayerReady()) {
         console.log('Waiting for player to be ready...');
         return;
@@ -109,9 +121,13 @@ document.getElementById("start-button").addEventListener("click", function() {
             startAnimation();
         }
     } else {
-        checkTiming();
+        if (currentVersion === 'record') {
+            recordTiming();
+        } else {
+            checkTiming();
+        }
     }
-});
+}
 
 // タイミング判定用の関数
 document.addEventListener('keydown', function(event) {
@@ -184,7 +200,7 @@ function stopAnimation() {
 }
 
 // 共通の描画処理
-function drawNotesCommon(ctx, currentTime, version) {
+function drawNotesCommon(ctx, currentTime) {
     const canvas = ctx.canvas;
     const dpr = window.devicePixelRatio || 1;
     
@@ -205,9 +221,7 @@ function drawNotesCommon(ctx, currentTime, version) {
         const beatTime = OFFSET + ((currentBeat + i) * 60.0000 / BPM);
         const timeUntilBeat = beatTime - currentTime;
         
-        const shouldDrawBeat = version === 'v1' ?
-            (timeUntilBeat > 0 && timeUntilBeat < 3 && beatTime >= OFFSET) :
-            (timeUntilBeat > -1 && timeUntilBeat < 3 && beatTime >= OFFSET);
+        const shouldDrawBeat = (timeUntilBeat > -1 && timeUntilBeat < 3 && beatTime >= OFFSET);
 
         if (shouldDrawBeat) {
             const x = JUDGE_LINE_X + (timeUntilBeat * NOTE_SPEED);
@@ -225,10 +239,9 @@ function drawNotesCommon(ctx, currentTime, version) {
 
     // ノーツの描画
     targetTimings.forEach(timing => {
-        const timeUntilNote = timing - currentTime;
-        const shouldDraw = version === 'v1' ? 
-            (timeUntilNote > 0 && timeUntilNote < 3) :
-            (timeUntilNote > -1 && timeUntilNote < 3 && !judgedTimings.has(timing));
+        const adjustedTiming = timing + timingOffset;
+        const timeUntilNote = adjustedTiming - currentTime;
+        const shouldDraw = (timeUntilNote > -1 && timeUntilNote < 3 && !judgedTimings.has(timing));
 
         if (shouldDraw) {
             const x = JUDGE_LINE_X + (timeUntilNote * NOTE_SPEED);
@@ -262,7 +275,7 @@ window.drawNotes = function(deltaTime) {
     const currentTime = player.getCurrentTime();
 
     // 共通描画処理を呼び出し
-    drawNotesCommon(ctx, currentTime, 'v1');
+    drawNotesCommon(ctx, currentTime);
 };
 
 // v2用のNoteJudgeManagerクラス
@@ -286,7 +299,7 @@ class NoteJudgeManager {
         const judgeId = noteIndex % 8;
         const judge = this.judges[judgeId];
         
-        const timing = targetTimings[noteIndex];
+        const timing = targetTimings[noteIndex] + timingOffset;
         const timingDifference = Math.abs(currentTime - timing);
 
         if (timingDifference <= JUDGE_RANGES.PERFECT) {
@@ -309,22 +322,21 @@ class NoteJudgeManager {
 }
 
 // MISS判定の共通処理
-function checkMissedNotes(currentTime, version) {
-    if (version === 'v2') {
-        targetTimings.forEach(timing => {
-            const timeUntilNote = timing - currentTime;
-            if (timeUntilNote < -JUDGE_RANGES.BAD && !judgedTimings.has(timing)) {
-                const unjudgedNotes = targetTimings
-                    .filter(t => !judgedTimings.has(t))
-                    .sort((a, b) => a - b);
-                
-                if (unjudgedNotes[0] === timing) {
-                    judgedTimings.add(timing);
-                    showMissJudgment(currentTime);
-                }
+function checkMissedNotes(currentTime) {
+    targetTimings.forEach(timing => {
+        const adjustedTiming = timing + timingOffset;
+        const timeUntilNote = adjustedTiming - currentTime;
+        if (timeUntilNote < -JUDGE_RANGES.BAD && !judgedTimings.has(timing)) {
+            const unjudgedNotes = targetTimings
+                .filter(t => !judgedTimings.has(t))
+                .sort((a, b) => a - b);
+            
+            if (unjudgedNotes[0] === timing) {
+                judgedTimings.add(timing);
+                showMissJudgment(currentTime);
             }
-        });
-    }
+        }
+    });
 }
 
 // MISS判定表示用の関数
@@ -356,8 +368,8 @@ function applyV2Features() {
         const ctx = canvas.getContext('2d');
         const currentTime = player.getCurrentTime();
 
-        checkMissedNotes(currentTime, 'v2');
-        drawNotesCommon(ctx, currentTime, 'v2');
+        checkMissedNotes(currentTime);
+        drawNotesCommon(ctx, currentTime);
     };
 
     window.checkTiming = function() {
@@ -373,7 +385,7 @@ function applyV2Features() {
         if (unjudgedNotes.length === 0) return;
 
         const firstNote = unjudgedNotes[0];
-        const timeDiff = Math.abs(currentTime - firstNote.timing);
+        const timeDiff = Math.abs(currentTime - (firstNote.timing + timingOffset));
 
         if (timeDiff <= JUDGE_RANGES.BAD) {
             showHitEffect();
@@ -390,60 +402,6 @@ function applyV2Features() {
         }
         
         lastJudgeTime = currentTime;
-    };
-}
-
-// v1の機能を適用
-function applyV1Features() {
-    window.drawNotes = function(deltaTime) {
-        if (!isPlaying) return;
-
-        const canvas = document.getElementById('notes-canvas');
-        const ctx = canvas.getContext('2d');
-        const currentTime = player.getCurrentTime();
-
-        drawNotesCommon(ctx, currentTime, 'v1');
-    };
-
-    window.checkTiming = function() {
-        if (!checkPlayerReady() || !isPlaying) return;
-
-        const currentTime = player.getCurrentTime();
-        const feedback = document.getElementById('feedback');
-        
-        const nearestTiming = targetTimings.reduce((nearest, timing) => {
-            return Math.abs(currentTime - timing) < Math.abs(currentTime - nearest) ? timing : nearest;
-        });
-
-        const timingDifference = Math.abs(currentTime - nearestTiming);
-        const formattedTime = currentTime.toFixed(3);
-        let result;
-        
-        showHitEffect();
-        
-        if (timingDifference <= 0.5) {
-            score += Math.floor((1 - timingDifference) * 100);
-            feedback.textContent = "Perfect!";
-            feedback.style.color = "green";
-            result = "Perfect!";
-        } else if (timingDifference <= 1.0) {
-            score += 50;
-            feedback.textContent = "Good!";
-            feedback.style.color = "blue";
-            result = "Good!";
-        } else {
-            feedback.textContent = "Miss!";
-            feedback.style.color = "red";
-            result = "Miss!";
-        }
-        
-        timingHistory.push({
-            time: formattedTime,
-            result: result
-        });
-        
-        updateTimingLog();
-        updateScore();
     };
 }
 
@@ -470,10 +428,16 @@ function resetGameState() {
     previousTimingHistory = [];
     lastFrameTime = 0;
     
+    // ここでrecordedTimesArrayをクリア
+    recordedTimesArray = [];
+    
     document.getElementById("start-button").textContent = "練習開始！";
     document.getElementById("feedback").textContent = "";
     updateScore();
     updateTimingLog();
+    
+    // recordedTimesの表示を更新
+    updateRecordedTimes();
     
     if (currentVersion === 'v2') {
         window.judgedTimings = new Set();
@@ -504,6 +468,15 @@ function restartGame() {
     player.seekTo(0);
     player.playVideo();
     startAnimation();
+    drawNotes(0);
+
+    // ノーツの判定状況をリセット
+    if (currentVersion === 'v2') {
+        window.judgedTimings = new Set();
+        window.successfulHits = new Set();
+        window.lastJudgeTime = 0;
+        window.noteJudgeManager = new NoteJudgeManager();
+    }
 }
 
 // バージョン切り替え処理
@@ -519,7 +492,10 @@ function handleVersionSwitch() {
 
     resetGameState();
 
-    if (currentVersion === 'v1') {
+    if (currentVersion === 'v2') {
+        currentVersion = 'record';
+        console.log('Switching to record mode...');
+    } else {
         currentVersion = 'v2';
         console.log('Switching to v2...');
         try {
@@ -528,19 +504,11 @@ function handleVersionSwitch() {
         } catch (error) {
             console.error('Error applying v2 features:', error);
         }
-    } else {
-        currentVersion = 'v1';
-        console.log('Switching to v1...');
-        try {
-            applyV1Features();
-            console.log('v1 features applied successfully');
-        } catch (error) {
-            console.error('Error applying v1 features:', error);
-        }
     }
 
     updateVersionDisplay();
     showVersionChangeNotification();
+    updateDisplayMode(); // 表示モードを更新
 }
 
 // バージョン表示の更新
@@ -548,7 +516,7 @@ function updateVersionDisplay() {
     const versionSwitch = document.getElementById('version-switch');
     if (versionSwitch) {
         versionSwitch.textContent = currentVersion;
-        versionSwitch.title = `Click to switch to ${currentVersion === 'v1' ? 'v2' : 'v1'}`;
+        versionSwitch.title = `Click to switch to ${currentVersion === 'v2' ? 'record' : 'v2'}`;
     }
 }
 
@@ -631,51 +599,69 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeCanvas();
     startAnimation();
+    applyV2Features();
+    updateDisplayMode(); // 初期表示モードを設定
+
+    // スライダーの値が変更されたときの処理
+    const timingOffsetSlider = document.getElementById('timing-offset');
+    const timingOffsetValue = document.getElementById('timing-offset-value');
+    timingOffsetSlider.addEventListener('input', function() {
+        timingOffset = parseFloat(timingOffsetSlider.value);
+        timingOffsetValue.textContent = timingOffset.toFixed(1);
+    });
 });
-
-// 初期のcheckTiming関数（v1のデフォルト実装）
-window.checkTiming = function() {
-    if (!checkPlayerReady() || !isPlaying) return;
-
-    const currentTime = player.getCurrentTime();
-    const feedback = document.getElementById('feedback');
-    
-    const nearestTiming = targetTimings.reduce((nearest, timing) => {
-        return Math.abs(currentTime - timing) < Math.abs(currentTime - nearest) ? timing : nearest;
-    });
-
-    const timingDifference = Math.abs(currentTime - nearestTiming);
-    const formattedTime = currentTime.toFixed(3);
-    let result;
-    
-    showHitEffect();
-    
-    if (timingDifference <= 0.5) {
-        score += Math.floor((1 - timingDifference) * 100);
-        feedback.textContent = "Perfect!";
-        feedback.style.color = "green";
-        result = "Perfect!";
-    } else if (timingDifference <= 1.0) {
-        score += 50;
-        feedback.textContent = "Good!";
-        feedback.style.color = "blue";
-        result = "Good!";
-    } else {
-        feedback.textContent = "Miss!";
-        feedback.style.color = "red";
-        result = "Miss!";
-    }
-    
-    timingHistory.push({
-        time: formattedTime,
-        result: result
-    });
-    
-    updateTimingLog();
-    updateScore();
-};
 
 // resetGameのエイリアスを追加（既存のコードの最後に追加）
 function resetGame() {
     resetGameState();
+}
+
+// ノーツ記録モードの処理
+function recordTiming() {
+    const currentTime = player.getCurrentTime();
+    timingHistory.push({
+        time: currentTime.toFixed(3),
+        result: 'RECORDED'
+    });
+    recordedTimesArray.push(currentTime.toFixed(3));
+    updateTimingLog();
+    updateRecordedTimes();
+    console.log(`Recorded time: ${currentTime.toFixed(3)} seconds`);
+}
+
+// 記録した時間を表示する関数
+function updateRecordedTimes() {
+    const recordedTimesList = document.getElementById('recorded-times-list');
+    recordedTimesList.innerHTML = ''; // 既存の内容をクリア
+
+    recordedTimesArray.forEach(time => {
+        const timeEntry = document.createElement('div');
+        timeEntry.textContent = `時間: ${time}秒`;
+        recordedTimesList.appendChild(timeEntry);
+    });
+}
+
+// コピーボタンのイベントリスナーを追加
+document.getElementById('copy-button').addEventListener('click', function() {
+    const timesToCopy = `[${recordedTimesArray.join(', ')}]`;
+    navigator.clipboard.writeText(timesToCopy).then(() => {
+        console.log('記録した時間をクリップボードにコピーしました。');
+        alert('記録した時間をクリップボードにコピーしました。');
+    }).catch(err => {
+        console.error('クリップボードへのコピーに失敗しました:', err);
+    });
+});
+
+// 表示モードを更新する関数
+function updateDisplayMode() {
+    const timingLog = document.getElementById('timing-log');
+    const recordedTimes = document.getElementById('recorded-times');
+
+    if (currentVersion === 'record') {
+        timingLog.classList.remove('record-mode-only');
+        recordedTimes.classList.remove('record-mode-only');
+    } else {
+        timingLog.classList.add('record-mode-only');
+        recordedTimes.classList.add('record-mode-only');
+    }
 }

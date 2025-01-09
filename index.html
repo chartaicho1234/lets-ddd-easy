@@ -6,6 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Do-Did-Doneで遊ぼう</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        #recorded-times {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .copy-button {
+            margin-top: 10px;
+        }
+        .record-mode-only {
+            display: none;
+        }
+        .slider-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slider-container label {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 
 <body>
@@ -22,17 +46,26 @@
     <button id="start-button">練習開始！</button>
     <div id="score-display">スコア: 0</div>
     <div id="feedback"></div>
-    <div id="timing-log"></div>
+    <div id="timing-log" class="record-mode-only"></div>
+    <div id="recorded-times" class="record-mode-only">
+        <h3>記録した時間</h3>
+        <div id="recorded-times-list"></div>
+        <button id="copy-button" class="copy-button">記録した時間をコピー</button>
+    </div>
     <div class="button-container">
-        <button id="copy-button" onclick="copyTimings()">記録した時間をコピー</button>
         <button id="reset-button" onclick="resetGame()">ゲームを中断</button>
+    </div>
+    <div class="slider-container">
+        <label for="timing-offset">ノーツタイミング調整:</label>
+        <input type="range" id="timing-offset" min="-0.5" max="0.5" step="0.1" value="0">
+        <span id="timing-offset-value">0.0</span>
     </div>
 
     <div style="position: fixed; bottom: 10px; right: 10px; font-size: 12px;">
         <button id="version-switch" 
                 style="background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 0;"
                 title="Click to switch version">
-            v1
+            v2
         </button>
     </div>
 
